@@ -13,7 +13,7 @@ export default function Navbar({ user, onLogout }: Props) {
         <Link to="/" className="font-semibold tracking-tight text-white">
           <div className="flex items-center">
 
-            <img className="w-15   " src="/src/assets/icon.png" alt="Logo" />
+            <img className="w-15   " src="../../logo.png" alt="Logo" />
             <span className="text-lg font-semibold invisible md:visible">MovieShelf</span>
           </div>
         </Link>
