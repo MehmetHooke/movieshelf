@@ -35,12 +35,19 @@ This project is designed and developed as a **portfolio-level product**, not a t
 ## 📁 Project Structure
 
 src/
+
 ├─ services/ # API & Firestore logic (Axios-based)
+
 ├─ types/ # TypeScript models
+
 ├─ components/ # Reusable UI components
+
 ├─ pages/ # Route-level pages
+
 ├─ hooks/ # Custom hooks
+
 ├─ firebase/ # Firebase config
+
 
 
 ## Project Images
