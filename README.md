@@ -35,33 +35,44 @@ This project is designed and developed as a **portfolio-level product**, not a t
 ## 📁 Project Structure
 
 src/
+
 ├─ services/ # API & Firestore logic (Axios-based)
+
 ├─ types/ # TypeScript models
+
 ├─ components/ # Reusable UI components
+
 ├─ pages/ # Route-level pages
+
 ├─ hooks/ # Custom hooks
+
 ├─ firebase/ # Firebase config
+
 
 
 ## Project Images
 
+Discover Page
 <p align="center">
-    Discover Page
-  <img src="images/discover.png" alt="Login Screen" width="600">
+    
+  <img src="images/discoverPage.png" alt="Login Screen" width="600">
 </p>
 
+Movie Detail
 <p align="center">
-    Movie Detail
+    
   <img src="images/movieDetail.png" alt="Login Screen" width="600">
 </p>
 
+Login Screen
 <p align="center">
-    Login Screen
+    
   <img src="images/loginScreen.png" alt="Login Screen" width="600">
 </p>
 
+Favorites
 <p align="center">
-    Favorites
+    
   <img src="images/favorites.png" alt="Login Screen" width="600">
 </p>
 
