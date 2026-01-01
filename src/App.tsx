@@ -19,57 +19,59 @@ import { useEffect, useState } from "react";
 import type { Movie } from "./types/movie";
 
 export default function App() {
-
-
   const [favorites, setFavorites] = useState<Movie[]>([]);
-
-  //auth states
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-
-  //navigte için butonla
   const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      setAuthLoading(false);
 
       if (u) {
         const favs = await getFavorites(u.uid);
         setFavorites(favs);
       } else {
-        setFavorites([]); // logout olunca temizle
+        setFavorites([]);
       }
+
+      setAuthLoading(false);
     });
 
     return () => unsub();
   }, []);
 
+  async function toggleFavorite(movie: Movie) {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
 
-async function toggleFavorite(movie: Movie) {
-  if (!user) {
-    navigate("/auth");
-    return;
+    const exists = favorites.some((f) => f.id === movie.id);
+
+    setFavorites((prev) =>
+      exists ? prev.filter((x) => x.id !== movie.id) : [...prev, movie]
+    );
+
+    try {
+      if (exists) await removeFavorite(user.uid, movie.id);
+      else await addFavorite(user.uid, movie);
+    } catch {
+      setFavorites((prev) =>
+        exists ? [...prev, movie] : prev.filter((x) => x.id !== movie.id)
+      );
+    }
   }
 
-  const exists = favorites.some((f) => f.id === movie.id);
-
-  // ✅ doğru optimistic güncelleme
-  setFavorites((prev) =>
-    exists ? prev.filter((x) => x.id !== movie.id) : [...prev, movie]
-  );
-
-  try {
-    if (exists) await removeFavorite(user.uid, movie.id);
-    else await addFavorite(user.uid, movie);
-  } catch (e) {
-    // ✅ rollback (tersini uygula)
-    setFavorites((prev) =>
-      exists ? [...prev, movie] : prev.filter((x) => x.id !== movie.id)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#05070d] text-white flex items-center justify-center">
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-white/80">
+          Loading…
+        </div>
+      </div>
     );
   }
-}
 
 
 
@@ -86,7 +88,7 @@ async function toggleFavorite(movie: Movie) {
           user={user}
           onLogout={async () => {
             await logout();
-            navigate("/"); 
+            navigate("/");
           }}
         />
         <Routes>
