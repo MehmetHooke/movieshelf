@@ -37,8 +37,14 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
 
 
 
-    const moviesToShow = discoverQuery.data ?? [];
-    const loadingToShow = discoverQuery.isLoading;
+    const moviesToShow = isSearching
+        ? (searchQuery.data ?? [])
+        : (discoverQuery.data ?? []);
+
+    const loadingToShow = isSearching
+        ? searchQuery.isLoading
+        : discoverQuery.isLoading;
+
     const searcingNow = isSearching && searchQuery.isFetching;
     const sliderData = popularQuery.data ?? [];
     const errorToShow = isSearching
