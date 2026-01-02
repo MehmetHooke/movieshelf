@@ -32,6 +32,12 @@ This project is designed and developed as a **portfolio-level product**, not a t
 
 ---
 
+## Why this project?
+This project focuses on real-world API consumption, service-layer architecture,
+React Query based data management, and production-ready UI patterns.
+
+---
+
 ## 📁 Project Structure
 
 src/
