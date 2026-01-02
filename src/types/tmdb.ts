@@ -30,3 +30,10 @@ export type TmdbCreditsResponse = {
   id: number;
   cast: TmdbCastMember[];
 };
+
+
+export type Genre = { id: number; name: string };
+
+export type TmdbGenreListResponse = {
+  genres: Genre[];
+};

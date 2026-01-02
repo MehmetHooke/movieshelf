@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MovieCard from "../components/MovieCard";
 import type { Movie } from "../types/movie";
-import { getAxiosErrorInfo, getPopularMovies, searchMovies } from "../services/movieService";
+import { getAxiosErrorInfo } from "../services/movieService";
 import FeaturedSlider from "./FeaturedSlider";
+import { usePopularMovies } from "../queries/usePopularMovies";
+import { useSearchMovies } from "../queries/useSearchMovies";
+import { useGenres } from "../queries/useGenres";
+import { useDiscoverMovies } from "../queries/useDiscoverMovies";
+
 
 type Props = {
     favorites: Movie[];
@@ -12,59 +17,40 @@ type Props = {
 
 export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
     const [searchTerm, setSearchTerm] = useState("");
-    const [movie, setMovie] = useState<Movie[]>([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [open, setOpen] = useState(false)
+    const isSearching = !!searchTerm.trim();
+    const [page, setPage] = useState(1); // şimdilik sabit, sonra pagination ekleriz
 
-    useEffect(() => {
-        if (!searchTerm.trim()) {
-            // ✅ arama boşsa popular’a dön
-            (async () => {
-                try {
-                    setLoading(true);
-                    setError(null);
-                    const data = await getPopularMovies();
-                    setMovie(data);
-                } catch (err: unknown) {
-                    setError(getAxiosErrorInfo(err).message);
-                } finally {
-                    setLoading(false);
-                }
-            })();
+    const popularQuery = usePopularMovies(page, !isSearching);
+    const searchQuery = useSearchMovies(searchTerm);
 
-            return;
-        }
+    //tür filtreleme
+    const [selectedGenreIds, setSelectedGenreIds] = useState<number[]>([]);
+    function toggleGenre(id: number) {
+        setSelectedGenreIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+        setPage(1); // filtre değişince sayfayı başa al
+    }
+    const genresQuery = useGenres();
+    const discoverQuery = useDiscoverMovies(page, selectedGenreIds);
 
-        const controller = new AbortController();
 
-        const t = setTimeout(async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const data = await searchMovies(searchTerm, controller.signal);
-                setMovie(data);
-            } catch (err: unknown) {
-                // ✅ abort kaynaklı hata mesajı basma (bonus)
-                const msg = getAxiosErrorInfo(err).message.toLowerCase();
-                if (msg.includes("canceled") || msg.includes("abort")) return;
-                setError(getAxiosErrorInfo(err).message);
-            } finally {
-                setLoading(false);
-            }
-        }, 400);
 
-        return () => {
-            clearTimeout(t);
-            controller.abort();
-        };
-    }, [searchTerm]);
+    const moviesToShow = discoverQuery.data ?? [];
+    const loadingToShow = discoverQuery.isLoading;
+    const searcingNow = isSearching && searchQuery.isFetching;
+    const sliderData = popularQuery.data ?? [];
+    const errorToShow = isSearching
+        ? (searchQuery.isError ? getAxiosErrorInfo(searchQuery.error).message : null)
+        : (popularQuery.isError ? getAxiosErrorInfo(popularQuery.error).message : null);
 
 
 
     return (
         <>
             <FeaturedSlider
-                movies={movie.slice(0, 5)}
+                movies={sliderData.slice(page, page + 9)}
                 favorites={favorites}
                 onToggleFavorite={onToggleFavorite}
             />
@@ -77,6 +63,7 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
                         Discover
                     </h1>
 
+
                     <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                         <input
                             value={searchTerm}
@@ -86,18 +73,66 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
                         />
                         <button
                             className="rounded-xl bg-white px-5 py-3 font-medium text-black hover:bg-white/90"
-                            onClick={() => setSearchTerm("")}
+                            onClick={() => { setSelectedGenreIds([]); setPage(1); }}
                         >
                             Clear
                         </button>
                     </div>
 
-                    {error ? <div className=" text-center mt-15 text-3xl">Hata : {error}</div> : null}
+                    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <button
+                            onClick={() => setOpen((o) => !o)}
+                            className=" flex w-full items-center justify-between text-sm font-medium text-white/80"
+                        >
+                            <span>Filter by genre</span>
 
-                    {loading ? <div className=" text-center mt-15 text-3xl">Loading...</div> : null}
+                            <span className={`text-white/60 transition-transform duration-300 ${open ? "rotate-180" : "rotate-0"}`}>
+                                ▼
+                            </span>
+                        </button>
+
+                        <div
+                            className={[
+                                "overflow-hidden transition-all duration-600 ease-in-out",
+                                open ? "max-h-125 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1",
+                            ].join(" ")}
+                        >
+                            <div className="pt-2">
+                                {genresQuery.isLoading ? (
+                                    <div className="text-sm text-white/60">Loading genres...</div>
+                                ) : genresQuery.isError ? (
+                                    <div className="text-sm text-red-200">{genresQuery.error.message}</div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                                        {genresQuery.data!.map((g) => {
+                                            const checked = selectedGenreIds.includes(g.id);
+                                            return (
+                                                <label
+                                                    key={g.id}
+                                                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/80 hover:border-white/20"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={() => toggleGenre(g.id)}
+                                                    />
+                                                    {g.name}
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {errorToShow ? <div className="text-center mt-15 text-3xl">Hata: {errorToShow}</div> : null}
+                    {loadingToShow ? <div className="text-center mt-15 text-3xl">Loading...</div> : null}
+                    {searcingNow ? <div className="text-center mt-15 text-3xl">Searching...</div> : null}
 
                     <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {movie.map((m) => (
+                        {moviesToShow.map((m) => (
                             <MovieCard
                                 key={m.id}
                                 movie={m}
@@ -106,6 +141,29 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
                             />
                         ))}
                     </div>
+                </div>
+                <div className="flex w-full justify-between px-15">
+                    {(page > 1) &&
+
+                        <button className="mt-4 w-35 rounded-xl py-2 text-sm text-white/80 hover:bg-white/15 bg-white/10"
+                            disabled={isSearching || page === 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        >
+                            Previus Page
+                        </button>
+                    }
+                    <div className="flex justify-center mt-4    w-full">
+
+                        <span className=" text-center text-xl px-4 rounded-xl py-2 bg-white/10">{page}</span>
+                    </div>
+                    <button
+                        className="mt-4 w-35 rounded-xl py-2 text-sm text-white/80 hover:bg-white/15 bg-white/10"
+                        onClick={() => (setPage(prev => prev + 1))}
+                        disabled={isSearching}
+                    >
+
+                        Next Page
+                    </button>
                 </div>
             </div>
         </>

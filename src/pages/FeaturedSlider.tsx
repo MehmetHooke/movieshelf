@@ -36,7 +36,7 @@ export default function FeaturedSlider({
 
     return (
         
-        <section className="relative h-[80vh] w-full overflow-hidden pb-34">
+        <section className="relative h-[80vh] w-full -mt-14 overflow-hidden pb-34">
            <Link to={`/movie/${movie.id}`} className="block">
             {backdrop && (
                 <img

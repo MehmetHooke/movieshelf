@@ -1,7 +1,7 @@
 import axios from "axios";
 import { tmdb } from "../api/tmdb";
 import type { Movie } from "../types/movie";
-import type { TmdbCastMember, TmdbCreditsResponse, TmdbMovie, TmdbPagedResponse } from "../types/tmdb";
+import type { Genre, TmdbCastMember, TmdbCreditsResponse, TmdbGenreListResponse, TmdbMovie, TmdbPagedResponse } from "../types/tmdb";
 
 function mapTmdbMovie(m:TmdbMovie):Movie{
     return { 
@@ -15,9 +15,13 @@ function mapTmdbMovie(m:TmdbMovie):Movie{
 }
 
 
-export async function getPopularMovies(): Promise<Movie[]> {
-    const res = await tmdb.get<TmdbPagedResponse<TmdbMovie>>('/discover/movie');
-    return res.data.results.map(mapTmdbMovie)
+// query
+export async function getPopularMovies(page = 2): Promise<Movie[]> {
+  const res = await tmdb.get<TmdbPagedResponse<TmdbMovie>>("/discover/movie", {
+    params: { page },
+  });
+
+  return res.data.results.map(mapTmdbMovie);
 }
 
 
@@ -65,4 +69,34 @@ export async function getMovieCredits(
 
   // İstersen burada slice(0,10) yapmayalım, sayfada yaparsın.
   return res.data.cast;
+}
+
+
+//filtreleme özelliği
+
+export async function getGenres(): Promise<Genre[]> {
+  const res = await tmdb.get<TmdbGenreListResponse>("genre/movie/list");
+  return res.data.genres;
+}
+
+export async function discoverMovies(opts: {
+  page?: number;
+  genreIds?: number[];
+  sortBy?: "popularity.desc" | "vote_average.desc" | "primary_release_date.desc";
+}): Promise<Movie[]> {
+  const {
+    page = 1,
+    genreIds = [],
+    sortBy = "popularity.desc",
+  } = opts;
+
+  const res = await tmdb.get<TmdbPagedResponse<TmdbMovie>>("/discover/movie", {
+    params: {
+      page,
+      sort_by: sortBy,
+      with_genres: genreIds.length ? genreIds.join(",") : undefined,
+    },
+  });
+
+  return res.data.results.map(mapTmdbMovie);
 }
