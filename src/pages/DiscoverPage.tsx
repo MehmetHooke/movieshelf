@@ -27,6 +27,7 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
     //tür filtreleme
     const [selectedGenreIds, setSelectedGenreIds] = useState<number[]>([]);
     function toggleGenre(id: number) {
+        if (isSearching) return;
         setSelectedGenreIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
@@ -45,11 +46,13 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
         ? searchQuery.isLoading
         : discoverQuery.isLoading;
 
-    const searcingNow = isSearching && searchQuery.isFetching;
+    const searchingNow = isSearching && searchQuery.isFetching && !searchQuery.isLoading;
+
     const sliderData = popularQuery.data ?? [];
     const errorToShow = isSearching
         ? (searchQuery.isError ? getAxiosErrorInfo(searchQuery.error).message : null)
-        : (popularQuery.isError ? getAxiosErrorInfo(popularQuery.error).message : null);
+        : (discoverQuery.isError ? getAxiosErrorInfo(discoverQuery.error).message : null);
+
 
 
 
@@ -79,7 +82,7 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
                         />
                         <button
                             className="rounded-xl bg-white px-5 py-3 font-medium text-black hover:bg-white/90"
-                            onClick={() => { setSelectedGenreIds([]); setPage(1); }}
+                            onClick={() => { setSearchTerm("");setSelectedGenreIds([]); setPage(1); }}
                         >
                             Clear
                         </button>
@@ -120,6 +123,7 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
                                                     <input
                                                         type="checkbox"
                                                         checked={checked}
+                                                        disabled={isSearching}
                                                         onChange={() => toggleGenre(g.id)}
                                                     />
                                                     {g.name}
@@ -135,7 +139,7 @@ export default function DiscoverPage({ favorites, onToggleFavorite }: Props) {
 
                     {errorToShow ? <div className="text-center mt-15 text-3xl">Hata: {errorToShow}</div> : null}
                     {loadingToShow ? <div className="text-center mt-15 text-3xl">Loading...</div> : null}
-                    {searcingNow ? <div className="text-center mt-15 text-3xl">Searching...</div> : null}
+                    {searchingNow ? <div className="text-center mt-15 text-3xl">Searching...</div> : null}
 
                     <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {moviesToShow.map((m) => (

@@ -12,7 +12,8 @@ export default function FavoritesPage({ favorites, onToggleFavorite }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-3xl font-semibold text-white">Favorites</h1>
       <p className="mt-2 text-white/70">
-        You have {favorites.length} favorite movies      </p>
+        You have {favorites.length} favorite movies      
+      </p>
       {(favorites.length === 0) ?
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
